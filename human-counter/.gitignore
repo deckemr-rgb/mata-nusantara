@@ -1,0 +1,7 @@
+# database & artefak lokal
+counter.db
+__pycache__/
+*.pyc
+.venv/
+.env
+stream-test.txt

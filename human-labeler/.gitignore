@@ -1,0 +1,8 @@
+# kredensial server-side — JANGAN commit
+.env
+
+# dataset & artefak
+dataset/
+__pycache__/
+*.pyc
+.venv/

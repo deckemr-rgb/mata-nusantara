@@ -1,0 +1,147 @@
+import { readFileSync } from 'node:fs';
+
+/**
+ * Build-time Indonesian translation for the application markup.
+ *
+ * WHY BUILD TIME, AND WHY A WHOLE-STRING DICTIONARY
+ * -------------------------------------------------
+ * The templates are assembled into index.html before Vite ever sees them
+ * (application-html.js), so translating there costs nothing at runtime and
+ * leaves the English source templates untouched — which keeps them mergeable
+ * with upstream.
+ *
+ * Matching is on the COMPLETE, whitespace-normalized string, never on
+ * substrings. Substring replacement is what turns "Line" inside "Timeline" or
+ * "Area" inside "Search Area" into nonsense, and it is also how an id or a
+ * class name gets mangled. A key either matches a whole text node (or a whole
+ * attribute value) or nothing happens.
+ *
+ * WHAT IS DELIBERATELY NOT TRANSLATED
+ * -----------------------------------
+ *   - Material Symbols ligatures. The icon font renders `my_location` as a
+ *     glyph; translate that word and the ligature never forms, so the element
+ *     renders the literal text instead of an icon.
+ *   - <style> and <script> bodies, and every attribute that is not read by a
+ *     human (id, class, data-* hooks the code matches on).
+ *   - Provider and product names (OpenSky, AISStream, Open-Meteo, Cesium).
+ * Anything absent from the dictionary simply stays in English rather than
+ * being guessed at.
+ */
+
+/** Attributes whose values a person actually reads. */
+const READABLE_ATTRS = [
+  'title',
+  'placeholder',
+  'aria-label',
+  'aria-description',
+  'aria-roledescription',
+  'alt',
+  'label',
+  'data-tooltip',
+];
+
+/** Load the Indonesian dictionary, dropping the `_readme` metadata key. */
+export function loadIndonesianDictionary() {
+  const raw = JSON.parse(
+    readFileSync(new URL('../src/ui/i18n/id.json', import.meta.url), 'utf8'),
+  );
+  const dictionary = new Map();
+  for (const [key, value] of Object.entries(raw)) {
+    if (key.startsWith('_')) continue;
+    if (typeof value !== 'string' || !value) continue;
+    dictionary.set(key, value);
+  }
+  return dictionary;
+}
+
+/**
+ * Replace the regions this translator must not touch with opaque placeholders,
+ * so a later pass cannot reach inside them.
+ *
+ * @param {string} html
+ * @returns {{masked: string, restore: (text: string) => string}}
+ */
+function maskProtectedRegions(html) {
+  const slots = [];
+  const stash = (match) => {
+    const token = `\u0000GEVI18N${slots.length}\u0000`;
+    slots.push(match);
+    return token;
+  };
+
+  const masked = html
+    .replace(/<style[\s\S]*?<\/style>/gi, stash)
+    .replace(/<script[\s\S]*?<\/script>/gi, stash)
+    .replace(/<!--[\s\S]*?-->/g, stash)
+    // Material Symbols spans: the text content is an icon ligature.
+    .replace(
+      /<span[^>]*class="[^"]*material-symbols-outlined[^"]*"[^>]*>[\s\S]*?<\/span>/gi,
+      stash,
+    )
+    // Opt-out marker. The product name is the case this exists for: "VIEW" in
+    // "GOD'S EYE VIEW" is part of a name, while the same word elsewhere in the
+    // UI is a button label that must be translated. A dictionary keyed on the
+    // string alone cannot tell those apart, so the markup says which is which.
+    // The tag-name class must allow digits: `[a-z]+` captures only the "h" of
+    // an <h2>, so the \1 backreference then looks for a </h> that never comes
+    // and the opt-out silently does nothing.
+    .replace(/<([a-z][a-z0-9]*)[^>]*\bdata-i18n="off"[^>]*>[\s\S]*?<\/\1>/gi, stash);
+
+  const restore = (text) =>
+    text.replace(/\u0000GEVI18N(\d+)\u0000/g, (_, index) => slots[Number(index)]);
+
+  return { masked, restore };
+}
+
+/**
+ * Translate the user-visible strings in one HTML document.
+ *
+ * @param {string} html - Assembled markup.
+ * @param {Map<string,string>} dictionary - Source string -> Indonesian.
+ * @returns {{html: string, replaced: number, missed: Set<string>}}
+ */
+export function translateHtml(html, dictionary) {
+  const { masked, restore } = maskProtectedRegions(String(html ?? ''));
+  let replaced = 0;
+  const missed = new Set();
+
+  /** Look a candidate up by its whitespace-normalized form. */
+  const lookup = (value) => {
+    const normalized = String(value).replace(/\s+/g, ' ').trim();
+    if (!normalized || !/[A-Za-z]/.test(normalized)) return null;
+    const hit = dictionary.get(normalized);
+    if (hit) return hit;
+    missed.add(normalized);
+    return null;
+  };
+
+  let out = masked;
+
+  // 1) Readable attribute values.
+  for (const attr of READABLE_ATTRS) {
+    // The leading guard stops `label` from also matching `aria-label`: a plain
+    // \b matches between the hyphen and the "l", which would re-scan a value
+    // the aria-label pass had already translated.
+    const pattern = new RegExp(`((?<![-\\w])${attr}\\s*=\\s*")([^"]*)(")`, 'g');
+    out = out.replace(pattern, (whole, open, value, close) => {
+      const hit = lookup(value);
+      if (!hit) return whole;
+      replaced += 1;
+      return `${open}${hit}${close}`;
+    });
+  }
+
+  // 2) Text nodes. The capture keeps surrounding whitespace so indentation and
+  //    line structure survive translation.
+  out = out.replace(/>(\s*)([^<>]+?)(\s*)</g, (whole, lead, text, tail) => {
+    const hit = lookup(text);
+    if (!hit) return whole;
+    replaced += 1;
+    return `>${lead}${hit}${tail}<`;
+  });
+
+  // 3) The document language, so screen readers and the browser agree.
+  out = out.replace(/<html\s+lang="en"/i, '<html lang="id"');
+
+  return { html: restore(out), replaced, missed };
+}

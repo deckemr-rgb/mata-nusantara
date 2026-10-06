@@ -1,0 +1,82 @@
+# PRI NUSANTARA
+#
+# Menjalankan:   docker compose up -d --build
+# Melihat catatan: docker compose logs -f
+# Memperbarui:   git pull && docker compose up -d --build
+#
+# Panduan lengkap beserta langkah Hostinger: docs/DOCKER-PRI-NUSANTARA.md
+
+name: pri-nusantara
+
+services:
+  app:
+    build:
+      context: .
+      args:
+        # Kunci API disuntikkan SAAT BUILD, bukan saat jalan -- Vite mengganti
+        # teksnya di dalam bundel. Menaruhnya di `environment:` di bawah tidak
+        # akan berpengaruh apa pun. Keduanya opsional; aplikasi berjalan penuh
+        # tanpa satu pun kunci, termasuk seluruh CCTV Indonesia.
+        GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
+        CESIUM_ION_TOKEN: ${CESIUM_ION_TOKEN:-}
+    image: pri-nusantara:latest
+    container_name: pri-nusantara
+    restart: unless-stopped
+
+    # Membaca .env di folder yang sama. ALLOWED_HOSTS wajib diisi domain Anda;
+    # tanpa itu Vite menjawab "403 Blocked request" dan tidak memberi petunjuk
+    # lain.
+    env_file:
+      - .env
+
+    environment:
+      # Ditulis di sini, BUKAN diambil dari .env, dan itu disengaja.
+      #
+      # Panduan VPS tanpa Docker memakai HOST=127.0.0.1. Menyalin baris itu ke
+      # .env sebuah susunan Docker adalah kesalahan yang paling mudah terjadi
+      # dan paling membingungkan: kontainernya hidup, sehat menurut dirinya
+      # sendiri, dan tidak terjangkau dari mana pun. Nilai di blok ini menimpa
+      # .env, jadi kesalahan itu tidak mungkin terjadi.
+      #
+      # Yang membatasi akses adalah pemetaan porta di bawah, bukan baris ini.
+      HOST: "0.0.0.0"
+      PORT: "8080"
+
+    ports:
+      # Hanya mendengarkan di localhost mesin host: yang boleh menghubunginya
+      # cuma Nginx, dari mesin yang sama.
+      #
+      # Awalan "127.0.0.1:" inilah satu-satunya yang menutup porta ini dari
+      # internet. Bukan ufw: porta yang dipublikasikan Docker memasang aturan
+      # iptables sendiri yang memotong rantai INPUT ufw, sehingga `ufw deny
+      # 8080` tidak menghentikan apa pun. Menghapus awalan ini membuka aplikasi
+      # ke seluruh internet tanpa HTTPS.
+      #
+      # Ubah HOST_PORT di .env bila 8080 sudah dipakai layanan lain.
+      - "127.0.0.1:${HOST_PORT:-8080}:8080"
+
+    volumes:
+      # Cache penyedia (FIRMS, terrain, TomTom, Overpass, satelit). Tanpa volume
+      # ini setiap kontainer baru lahir dengan cache kosong dan menarik ulang
+      # semuanya dari sumber luar.
+      - cache:/app/.gev-cache
+
+    # Batas memori KONTAINER YANG BERJALAN. Ini tidak membatasi proses build --
+    # build berjalan di luar batas ini, dan bila RAM VPS Anda sempit yang
+    # dibutuhkan adalah swap, bukan angka di sini.
+    #
+    # Gunanya: bila suatu saat aplikasi ini membengkak, yang terbunuh cukup
+    # kontainernya sendiri lalu dijalankan ulang, bukan seluruh VPS berikut
+    # sshd-nya. Naikkan bila VPS Anda lega.
+    mem_limit: 2g
+
+    logging:
+      # Catatan kontainer tumbuh tanpa henti bila tidak dibatasi, dan disk VPS
+      # yang penuh mematikan semuanya sekaligus.
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  cache:

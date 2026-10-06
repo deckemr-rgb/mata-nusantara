@@ -1,0 +1,209 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+
+import {
+  loadIndonesianDictionary,
+  translateHtml,
+} from '../../build/i18n-html.js';
+import {
+  expandApplicationHtml,
+  buildApplicationHtml,
+} from '../../build/application-html.js';
+import { loadBrand } from '../../build/brand-html.js';
+
+const dict = () => new Map([['Save', 'Simpan'], ['Close panel', 'Tutup panel']]);
+
+test('translates text nodes on a whole-string match', () => {
+  const { html, replaced } = translateHtml('<button>Save</button>', dict());
+  assert.equal(html, '<button>Simpan</button>');
+  assert.equal(replaced, 1);
+});
+
+test('translates readable attributes', () => {
+  const { html } = translateHtml(
+    '<button title="Close panel" aria-label="Save"></button>',
+    dict(),
+  );
+  assert.ok(html.includes('title="Tutup panel"'));
+  assert.ok(html.includes('aria-label="Simpan"'));
+});
+
+test('never translates on a substring match', () => {
+  // "Save" inside a longer phrase is a DIFFERENT string and must be left alone
+  // — substring replacement is how "Line" inside "Timeline" gets mangled.
+  const { html, replaced } = translateHtml(
+    '<p>Save your work</p><p>Timeline</p>',
+    new Map([...dict(), ['Line', 'Garis']]),
+  );
+  assert.ok(html.includes('Save your work'));
+  assert.ok(html.includes('Timeline'));
+  assert.equal(replaced, 0);
+});
+
+test('never touches ids, classes or other non-readable attributes', () => {
+  const { html } = translateHtml(
+    '<div id="Save" class="Save" data-mode="Save">Save</div>',
+    dict(),
+  );
+  assert.ok(html.includes('id="Save"'));
+  assert.ok(html.includes('class="Save"'));
+  assert.ok(html.includes('data-mode="Save"'));
+  assert.ok(html.includes('>Simpan<'), 'only the text node is translated');
+});
+
+test('leaves Material Symbols ligatures alone', () => {
+  // The icon font renders the literal word as a glyph; translating it breaks
+  // the ligature and the element paints the word instead of an icon.
+  const source =
+    '<span class="material-symbols-outlined" aria-hidden="true">Save</span>';
+  const { html } = translateHtml(source, dict());
+  assert.equal(html, source);
+});
+
+test('leaves script and style bodies alone', () => {
+  const source = '<style>.Save{color:red}</style><script>var x="Save";</script>';
+  const { html } = translateHtml(source, dict());
+  assert.equal(html, source);
+});
+
+test('leaves HTML comments alone', () => {
+  const source = '<!-- Save this for later -->';
+  const { html } = translateHtml(source, dict());
+  assert.equal(html, source);
+});
+
+test('aria-label is not re-scanned by the label pass', () => {
+  // A plain \b before "label" also matches inside "aria-label", which would
+  // re-scan a value the aria-label pass had already translated.
+  const { html, missed } = translateHtml(
+    '<input aria-label="Save" />',
+    dict(),
+  );
+  assert.ok(html.includes('aria-label="Simpan"'));
+  assert.ok(!missed.has('Simpan'), 'a translated value must not be re-scanned');
+});
+
+test('sets the document language to Indonesian', () => {
+  const { html } = translateHtml('<html lang="en"><body></body></html>', dict());
+  assert.ok(html.includes('<html lang="id"'));
+});
+
+test('whitespace and indentation survive translation', () => {
+  const { html } = translateHtml('<p>\n      Save\n    </p>', dict());
+  assert.equal(html, '<p>\n      Simpan\n    </p>');
+});
+
+test('an empty dictionary is a no-op', () => {
+  const source = '<button title="Save">Save</button>';
+  const { html, replaced } = translateHtml(source, new Map());
+  assert.equal(html, source);
+  assert.equal(replaced, 0);
+});
+
+/* ------------------------------------------------------------------------
+ * The real dictionary, against the real application markup
+ * --------------------------------------------------------------------- */
+
+test('the shipped dictionary is well formed', () => {
+  const dictionary = loadIndonesianDictionary();
+  assert.ok(dictionary.size > 250, `expected a full dictionary, got ${dictionary.size}`);
+  for (const [key, value] of dictionary) {
+    assert.ok(key.trim() === key, `key "${key}" has stray whitespace`);
+    assert.ok(value.trim().length > 0, `key "${key}" has an empty translation`);
+  }
+  // An identical key and value is legitimate — Indonesian borrows a number of
+  // these words unchanged (RADIO, VOLUME, Area, Normal, Operator), so the
+  // check is that such entries are deliberate and few, not that none exist.
+  const identical = [...dictionary].filter(([key, value]) => key === value);
+  assert.ok(
+    identical.length < 20,
+    `too many pass-through entries, which usually means unfinished translation:\n${identical
+      .map(([key]) => key)
+      .join(', ')}`,
+  );
+});
+
+test('the assembled application markup is fully translated', () => {
+  const source = fs.readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
+  const expanded = expandApplicationHtml(source);
+  const { missed } = translateHtml(expanded, loadIndonesianDictionary());
+
+  // Everything legitimately left in English: provider names, technical
+  // abbreviations used as-is in Indonesian, icon ligatures, and placeholders.
+  const allowed =
+    /^(\u0000GEVI18N|&#x|--|ΔE|ΔN|📍)|^(3D|CCTV|HUD|NVG|FLIR|CRT|AIS|FOV|HDG|HGT|KTS|FT|MM|SIG|WX|MIL|TEMP|WIND|PRECIP|SKY|FLT|SITE|N|CAL|RANGE|PITCH|DEST|GEV|OPEN-METEO|OpenSky|OpenStreetMap|AISStream|adsb\.lol|my_location|Teropong)/;
+  const untranslated = [...missed].filter((s) => !allowed.test(s));
+  assert.deepEqual(
+    untranslated,
+    [],
+    `these user-visible strings have no Indonesian translation:\n${untranslated.join('\n')}`,
+  );
+});
+
+test('buildApplicationHtml expands and translates in one pass', () => {
+  const source = fs.readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
+  const html = buildApplicationHtml(source);
+  assert.ok(html.includes('lang="id"'));
+  assert.ok(html.includes('Pilih tampilan pertama Anda'));
+  assert.ok(html.includes('LAPISAN DATA'));
+  // The icon font still gets its ligatures.
+  assert.ok(html.includes('>my_location<'));
+});
+
+test('data-i18n="off" opts a subtree out of translation', () => {
+  const source = '<h2 data-i18n="off">Save <span>Save</span></h2>';
+  const { html } = translateHtml(source, dict());
+  assert.equal(html, source, 'nothing inside the opted-out subtree changes');
+});
+
+test('the opt-out works on tag names containing digits', () => {
+  // `[a-z]+` captures only the "h" of an <h2>, so the closing-tag
+  // backreference never matches and the opt-out silently does nothing.
+  const { html } = translateHtml('<h2 data-i18n="off">Save</h2>', dict());
+  assert.ok(html.includes('>Save<'), '<h2> must honour the opt-out');
+  const { html: h1 } = translateHtml('<h1 data-i18n="off">Save</h1>', dict());
+  assert.ok(h1.includes('>Save<'), '<h1> must honour the opt-out');
+});
+
+test('the product name survives translation in the real markup', () => {
+  // The dictionary must never translate a brand name. A word like "VIEW" is an
+  // ordinary label elsewhere in the UI, so the markup — via data-i18n="off" —
+  // is what resolves the ambiguity, not the dictionary.
+  //
+  // Asserted against the ACTIVE brand rather than one fixed name, so rebranding
+  // does not fail this test; what it guards is that whatever name is configured
+  // comes out of the build intact.
+  const source = fs.readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
+  const html = buildApplicationHtml(source);
+  const brand = loadBrand();
+
+  // The two surfaces close differently — one sits in a <span>, the other in an
+  // <h2> — so the match runs to a bounded length rather than to a fixed
+  // closing tag.
+  const surfaces = html.match(/data-brand="name"[^>]*>[\s\S]{0,160}/g) || [];
+  assert.ok(surfaces.length >= 2, 'both brand surfaces should be present');
+  for (const surface of surfaces) {
+    assert.ok(
+      surface.includes(brand.name),
+      `brand name was altered: ${surface}`,
+    );
+    if (brand.nameAccent) {
+      assert.ok(
+        surface.includes(brand.nameAccent),
+        `brand accent was altered: ${surface}`,
+      );
+    }
+  }
+});
+
+test('the logo carries no eye shapes', () => {
+  // The circular "eye" reading is exactly what this build removes; the mark is
+  // a HUD reticle around the same globe instead.
+  const svg = fs.readFileSync(new URL('../../public/logo.svg', import.meta.url), 'utf8');
+  assert.ok(!/<path[^>]*id="outer_eye"/.test(svg), 'outer eye shell must be gone');
+  assert.ok(!/<path[^>]*id="inner_eye"/.test(svg), 'inner eye shell must be gone');
+  // The globe and its cage are kept — logoGaze.js animates both by id.
+  assert.ok(/id="globe"/.test(svg), 'the globe is still the centre of the mark');
+  assert.ok(/id="globe_cage"/.test(svg), 'and its lat/lon cage still exists');
+});

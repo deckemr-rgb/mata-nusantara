@@ -1,0 +1,35 @@
+[
+  {
+    "_comment": "TEMPLATE — copy an entry into cctv_sources.indonesia.json and edit it. Only add cameras a public body already publishes for public viewing. Required: id, lat, lon, url. Coordinates must fall inside Indonesia or the entry is dropped.",
+    "id": "semarang-simpang-lima",
+    "name": "Simpang Lima",
+    "city": "Semarang",
+    "cityId": "semarang",
+    "provider": "Pemerintah Kota Semarang (Dinas Perhubungan)",
+    "lat": -6.9908,
+    "lon": 110.4229,
+    "url": "https://example.go.id/live/simpanglima/index.m3u8",
+    "feedType": "hls",
+    "headingDeg": 270,
+    "headingConfidence": "low",
+    "pitchDeg": -16,
+    "fovDeg": 50,
+    "rangeM": 170,
+    "mountHeightM": 9,
+    "groundElevationM": 5,
+    "license": "Public traffic camera feed published by Pemerintah Kota Semarang"
+  },
+  {
+    "_comment": "A still-image (snapshot) camera. feedType 'image' polls the URL; 'mjpeg' and 'mp4' are also accepted.",
+    "id": "denpasar-catur-muka",
+    "name": "Catur Muka",
+    "city": "Denpasar",
+    "cityId": "denpasar",
+    "provider": "Pemerintah Kota Denpasar (Dinas Perhubungan)",
+    "lat": -8.6565,
+    "lon": 115.2167,
+    "url": "https://example.go.id/snapshot/caturmuka.jpg",
+    "feedType": "image",
+    "groundElevationM": 12
+  }
+]

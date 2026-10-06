@@ -1,0 +1,28 @@
+# Dibangun ulang di dalam image; menyalinnya dari mesin pembangun justru
+# berbahaya karena binari native (sharp) terikat pada sistem operasi asalnya.
+node_modules
+dist
+
+# Rahasia. Kunci API diberikan lewat build arg dan env, tidak pernah dipanggang
+# ke dalam image lewat berkas.
+.env
+.env.*
+!.env.example
+
+# Cache runtime. Isinya milik kontainer yang sedang berjalan, bukan milik image;
+# memanggangnya berarti setiap kontainer baru lahir dengan data basi.
+.gev-cache
+
+# Riwayat dan perkakas, tidak dibaca saat berjalan.
+.git
+.github
+.vscode
+*.log
+
+# 68 MB tangkapan layar dan video. Tidak satu pun dibaca saat berjalan; teks
+# panduannya tetap ikut supaya bisa dibaca dari dalam kontainer.
+docs/media
+
+# Berkas uji tidak diimpor oleh kode yang berjalan.
+**/*.test.mjs
+**/*.test.js

@@ -1,0 +1,123 @@
+{
+  "_readme": "Koordinat perkiraan untuk kamera CCTV publik DKI Jakarta. Portal resmi (jakcctv.jakarta.go.id/publik) menerbitkan nama lokasi dan URL stream, TETAPI TIDAK menerbitkan koordinat. Titik di bawah ini digeocode sekali dari nama jalan lewat OpenStreetMap Nominatim, lalu diverifikasi berada di dalam DKI Jakarta. Akurasinya setingkat ruas jalan, bukan tiang kamera: perlakukan sebagai perkiraan awal dan koreksi dengan gizmo kalibrasi di dalam aplikasi.",
+  "_readme_en": "Approximate coordinates for DKI Jakarta public CCTV. The official portal publishes names and stream URLs but NO coordinates; these were geocoded once from the street names via OpenStreetMap Nominatim and verified to fall inside Jakarta. Street-level accuracy, not pole-level — treat as priors and correct with the in-app calibration gizmo.",
+  "_source": "https://jakcctv.jakarta.go.id/publik + https://nominatim.openstreetmap.org (ODbL)",
+  "locations": {
+    "JKP POLDA JPO JL. GATOT SUBROTO 7": {
+      "lat": -6.21929,
+      "lon": 106.81256
+    },
+    "JKP POLDA JL. GERBANG PEMUDA C02": {
+      "lat": -6.2123551,
+      "lon": 106.8080608
+    },
+    "JKP POLDA JL. GERBANG PEMUDA C03": {
+      "lat": -6.2123551,
+      "lon": 106.8080608
+    },
+    "JKP SATPOL PP JL. GERBANG PEMUDA C04": {
+      "lat": -6.2123551,
+      "lon": 106.8080608
+    },
+    "JKP SATPOL PP JL. JEND. GATOT SUBROTO C11": {
+      "lat": -6.2424711,
+      "lon": 106.8423401
+    },
+    "JKP POLDA JL. JEND. GATOT SUBROTO C13": {
+      "lat": -6.2424711,
+      "lon": 106.8423401
+    },
+    "JKP POLDA JL. TENTARA PELAJAR C04": {
+      "lat": -6.2056047,
+      "lon": 106.7984923
+    },
+    "JKP POLDA JL. JEND. GATOT SUBROTO C14": {
+      "lat": -6.2424711,
+      "lon": 106.8423401
+    },
+    "JKP DBM FLYOVER LADOKGI C01": {
+      "lat": -6.2115454,
+      "lon": 106.8086825
+    },
+    "JKP SATPOL PP SIMPANG JL. MH. THAMRIN C07": {
+      "lat": -6.1911,
+      "lon": 106.8229
+    },
+    "JKP SATPOL PP SIMPANG JL. MH. THAMRIN C08": {
+      "lat": -6.1911,
+      "lon": 106.8229
+    },
+    "JKP DISHUB JL. MH. THAMRIN C01": {
+      "lat": -6.1911,
+      "lon": 106.8229
+    },
+    "JKP SATPOLPP JL. MH. THAMRIN C02": {
+      "lat": -6.1911,
+      "lon": 106.8229
+    },
+    "JKP SATPOL PP SIMPANG JL. MH. THAMRIN C09": {
+      "lat": -6.1911,
+      "lon": 106.8229
+    },
+    "JKP POLRI UOB PLAZA C01": {
+      "lat": -6.19898,
+      "lon": 106.8223527
+    },
+    "Taman Literasi-C01": {
+      "lat": -6.2435015,
+      "lon": 106.798874
+    },
+    "Simpang Jl. Panglima Polim-C01": {
+      "lat": -6.2522628,
+      "lon": 106.7984651
+    },
+    "Jl. Sultan Agung-C03": {
+      "lat": -6.2073674,
+      "lon": 106.8416697
+    },
+    "Simpang Jl. Sultan Agung-C01": {
+      "lat": -6.2073674,
+      "lon": 106.8416697
+    },
+    "Simpang Jl. Sultan Agung-C02": {
+      "lat": -6.2073674,
+      "lon": 106.8416697
+    },
+    "Pasar Tanah Abang-C02": {
+      "lat": -6.2061255,
+      "lon": 106.815854
+    },
+    "Jl. Jati Baru Raya-C02": {
+      "lat": -6.18447,
+      "lon": 106.81114
+    },
+    "Senayan 018": {
+      "lat": -6.2265862,
+      "lon": 106.8115621
+    },
+    "Senayan 001": {
+      "lat": -6.2265862,
+      "lon": 106.8115621
+    },
+    "Bendungan Hilir 003": {
+      "lat": -6.2150263,
+      "lon": 106.8179484
+    },
+    "Kebon Melati 010": {
+      "lat": -6.1974872,
+      "lon": 106.8165458
+    },
+    "JKB SATPOL PP SIMPANG JL. LETJEN. S. PARMAN C07": {
+      "lat": -6.17174,
+      "lon": 106.79037
+    },
+    "JKB SATPOL PP SIMPANG JL. LETJEN. S. PARMAN C08": {
+      "lat": -6.17174,
+      "lon": 106.79037
+    },
+    "Jl. KH. Mas Mansyur-C02": {
+      "lat": -6.18943,
+      "lon": 106.81543
+    }
+  }
+}

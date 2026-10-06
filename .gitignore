@@ -1,0 +1,19 @@
+# rahasia & artefak lokal — jangan commit
+.env
+*.db
+dataset/
+
+# dependensi & build
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+dist/
+
+# model & media besar (diunduh otomatis / demo)
+*.pt
+*.mp4
+
+# uji & log
+stream-test.txt
+*.log

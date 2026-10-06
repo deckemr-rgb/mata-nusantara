@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Human Counter — Pencatatan Orang Melewati CCTV</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2/dist/coco-ssd.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">🚶</span>
+      <div>
+        <h1>HUMAN COUNTER</h1>
+        <p>Pencatatan orang melewati CCTV · deteksi real-time di peramban · anti-duplikat dua lapis · tanpa peta</p>
+      </div>
+    </div>
+    <div class="stat-cards">
+      <div class="stat-card accent"><b id="stat-total">0</b><span>TOTAL TERDAFTAR</span></div>
+      <div class="stat-card"><b id="stat-today">0</b><span>HARI INI</span></div>
+      <div class="stat-card"><b id="stat-hour">0</b><span>JAM TERAKHIR</span></div>
+      <div class="stat-card"><b id="stat-cameras">0</b><span>KAMERA AKTIF</span></div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="cameras">
+      <div class="section-title">KAMERA LANGSUNG — setiap orang yang lewat tercatat sekali</div>
+      <div id="camera-grid" class="camera-grid"></div>
+    </section>
+
+    <aside class="side">
+      <div class="section-title">ORANG TERDAFTAR (TERBARU)</div>
+      <ul id="feed" class="feed"></ul>
+      <div class="section-title">LEWATAN PER MENIT (30 MENIT)</div>
+      <canvas id="chart" width="320" height="120"></canvas>
+      <div class="section-title">PER KAMERA</div>
+      <ul id="per-camera" class="per-camera"></ul>
+    </aside>
+  </main>
+
+  <script src="/static/tracker.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

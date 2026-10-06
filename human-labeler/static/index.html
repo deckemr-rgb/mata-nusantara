@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Human Labeler · Mata Nusantara</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">👤</span>
+      <div>
+        <h1>HUMAN LABELER</h1>
+        <p>Pelabelan data deteksi manusia dari CCTV Mata Nusantara · YOLOv8 pre-label</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <div id="stats" class="stats">
+        <span class="stat"><b id="stat-samples">0</b> sampel</span>
+        <span class="stat"><b id="stat-approved">0</b> disetujui</span>
+        <span class="stat"><b id="stat-boxes">0</b> kotak</span>
+        <span class="stat"><b id="stat-human">0</b> editan manusia</span>
+      </div>
+      <a class="btn" href="/api/export/yolo" download>⬇ Ekspor YOLO</a>
+      <a class="btn" href="/api/export/coco" download>⬇ Ekspor COCO</a>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- KIRI: kolektor otomatis + sumber kamera -->
+    <aside class="panel left">
+      <h2>PENGUMPUL DATA OTOMATIS</h2>
+      <p class="hint">Sistem berputar terus di antara kamera CCTV: ambil bingkai
+        aktual → pre-label YOLOv8 → simpan sampel pending untuk Anda tinjau.</p>
+      <div class="collector-grid">
+        <label class="field">Jeda antar ambil (detik)
+          <input id="collector-interval" type="number" value="8" min="3" max="600" />
+        </label>
+        <label class="field">Min. orang (0 = simpan semua)
+          <input id="collector-min" type="number" value="1" min="0" max="50" />
+        </label>
+        <label class="field">Batas sampel pending
+          <input id="collector-max" type="number" value="300" min="10" max="10000" />
+        </label>
+        <label class="field">Luas kota
+          <select id="collector-city"><option value="">Semua kota</option></select>
+        </label>
+      </div>
+      <div class="row">
+        <button id="collector-btn" class="btn primary">▶ MULAI KOLEKTOR</button>
+      </div>
+      <div id="collector-stats" class="collector-stats" hidden>
+        <div class="collector-line"><span>status</span><b id="coll-status">—</b></div>
+        <div class="collector-line"><span>saringan AI (Jev)</span><b id="coll-ai">—</b></div>
+        <div class="collector-line"><span>terkumpul</span><b id="coll-captured">0</b></div>
+        <div class="collector-line"><span>auto-setujui Jev</span><b id="coll-aiapproved">0</b></div>
+        <div class="collector-line"><span>dilewati (sepi)</span><b id="coll-skipped">0</b></div>
+        <div class="collector-line"><span>disaring Jev</span><b id="coll-aifiltered">0</b></div>
+        <div class="collector-line"><span>galat</span><b id="coll-errors">0</b></div>
+        <div class="collector-line"><span>pending</span><b id="coll-pending">0</b></div>
+        <div class="collector-line wide"><span>keputusan terakhir</span><b id="coll-decision">—</b></div>
+        <div class="collector-line wide"><span>kamera terakhir</span><b id="coll-camera">—</b></div>
+      </div>
+      <h2>SUMBER KAMERA</h2>
+      <label class="field">Kota
+        <select id="city-filter"><option value="">Semua kota</option></select>
+      </label>
+      <label class="field">Kamera
+        <select id="camera-select" size="10"></select>
+      </label>
+      <div class="row">
+        <button id="capture-btn" class="btn primary">📸 CAPTURE</button>
+        <button id="auto-btn" class="btn" aria-pressed="false">AUTO MATI</button>
+      </div>
+      <p class="hint">Capture mengambil bingkai langsung dari kamera CCTV dan
+        memberi pre-label kotak orang dari YOLOv8. AUTO mengulang tiap 20 detik.</p>
+      <h2>SAMPEL TERBARU</h2>
+      <ul id="sample-list" class="sample-list"></ul>
+    </aside>
+
+    <!-- TENGAH: editor -->
+    <section class="panel center">
+      <div class="editor-bar">
+        <span id="editor-title" class="editor-title">Belum ada sampel — pilih kamera lalu CAPTURE</span>
+        <span id="editor-status" class="editor-status" data-state="idle">IDLE</span>
+      </div>
+      <div id="canvas-wrap" class="canvas-wrap">
+        <canvas id="editor-canvas" tabindex="0"></canvas>
+        <div id="canvas-empty" class="canvas-empty">Belum ada bingkai</div>
+      </div>
+      <div class="editor-help">
+        <b>Gambar</b>: seret di area kosong · <b>Pindah</b>: seret di dalam kotak ·
+        <b>Ubah ukuran</b>: seret sudut · <b>Hapus</b>: tombol Del ·
+        kelas kotak baru mengikuti pilihan kelas di panel kanan
+      </div>
+    </section>
+
+    <!-- KANAN: kotak & aksi -->
+    <aside class="panel right">
+      <h2>KOTAK</h2>
+      <label class="field">Kelas kotak baru / terpilih
+        <input id="class-input" list="class-options" value="person" />
+        <datalist id="class-options">
+          <option value="person"></option>
+        </datalist>
+      </label>
+      <ul id="box-list" class="box-list"></ul>
+      <div class="row">
+        <button id="save-btn" class="btn primary" disabled>✔ SIMPAN & SETUJUI</button>
+      </div>
+      <div class="row">
+        <button id="skip-btn" class="btn" disabled>🗑 Buang sampel</button>
+        <button id="delete-box-btn" class="btn" disabled>Hapus kotak (Del)</button>
+      </div>
+      <h2>AKUMULASI KELAS</h2>
+      <ul id="class-stats" class="class-stats"></ul>
+    </aside>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "_readme": "Bingkai geografis public/splash.svg, ditulis oleh scripts/build-splash-map.mjs. Dipakai src/ui/splashOverlay.js untuk menempelkan gambar itu tepat di atas Nusantara pada globe. Bila Anda mengganti splash.svg dengan gambar sendiri yang bingkainya berbeda, sesuaikan angka di sini agar tetap pas.",
+  "west": 94.608,
+  "south": -10.947,
+  "east": 141.6,
+  "north": 6.229
+}

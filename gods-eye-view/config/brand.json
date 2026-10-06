@@ -1,0 +1,15 @@
+{
+  "_readme": "Identitas merek aplikasi. Ubah berkas ini untuk mengganti nama, tagline, dan logo di seluruh antarmuka — tidak perlu menyentuh berkas template mana pun. Diterapkan saat proses build oleh build/brand-html.js. Panduan lengkap, termasuk hal yang WAJIB tetap dicantumkan secara hukum, ada di docs/WHITELABEL.md.",
+  "name": "MATA",
+  "_name": "Bagian pertama nama produk pada judul di layar. Huruf besar mengikuti gaya antarmuka.",
+  "nameAccent": "NUSANTARA",
+  "_nameAccent": "Bagian kedua nama, ditampilkan dengan warna aksen. Kosongkan (\"\") bila nama merek Anda hanya satu kata.",
+  "documentTitle": "Mata Nusantara",
+  "_documentTitle": "Judul tab peramban dan nama saat dijadikan pintasan.",
+  "tagline": "PANTAU NUSANTARA DARI SATU LAYAR",
+  "_tagline": "Baris kecil di bawah judul. Kosongkan (\"\") untuk menyembunyikannya.",
+  "logo": "/logo.svg",
+  "_logo": "Berkas logo di folder public/. Dipakai untuk logo di layar sekaligus favicon. Ganti isi public/logo.svg, atau taruh berkas lain di public/ lalu tulis namanya di sini.",
+  "splash": "/splash.png",
+  "_splash": "Berkas layar pembuka di folder public/, ditempelkan pada globe di atas Nusantara. Harus berupa PNG atau JPG: Cesium mengunggahnya sebagai tekstur WebGL, dan SVG ditolak di jalur itu. public/splash.svg disertakan sebagai sumber yang bisa disunting, dan scripts/build-splash-map.mjs merender PNG-nya dari situ."
+}
